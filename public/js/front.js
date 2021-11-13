@@ -5,6 +5,7 @@ const allTodosBtn = document.querySelector('ul.filters li a#all');
 const activeTodosBtn = document.querySelector('ul.filters li a#active');
 const completedTodosBtn = document.querySelector('ul.filters li a#completed');
 const filterBtns = document.querySelectorAll('ul.filters li a');
+const clearBtn = document.querySelector('footer.footer button.clear-completed');
 
 let todosArray = [];
 
@@ -117,6 +118,13 @@ const createTodo = (e) => {
       console.log('enter any text');
       return;
     }
+
+    if (todoInput.value.includes('<') || todoInput.value.includes('>')) {
+      todoInput.value = '';
+      console.log('character not allowed');
+      return;
+    }
+
     const existingTodos = todosArray.map((el) => el.todo);
     if (existingTodos.includes(todoInput.value)) {
       console.log('this task already exist');
@@ -151,18 +159,48 @@ const renderTodos = async (path) => {
   todoList.addEventListener('dblclick', editTodo);
 
   todoInput.addEventListener('keypress', createTodo);
+
+  allTodosBtn.classList.add('selected');
 };
 
 renderTodos('/all');
 
-function changeFilter(btn, path) {
+function changeFilter(btn) {
   filterBtns.forEach((el) => {
     el.classList.remove('selected');
   });
   btn.classList.add('selected');
-  todosArray = [];
-  todoList.textContent = '';
-  renderTodos(path);
+
+  const allLis = document.querySelectorAll('ul.todo-list li');
+  allLis.forEach((li) => { li.style.display = 'none'; });
+  if (btn === allTodosBtn) {
+    allLis.forEach((li) => { li.style.display = 'block'; });
+  } else if (btn === activeTodosBtn) {
+    allLis.forEach((li) => {
+      if (!(li.classList.contains('completed'))) {
+        li.style.display = 'block';
+      }
+    });
+  } else if (btn === completedTodosBtn) {
+    allLis.forEach((li) => {
+      if (li.classList.contains('completed')) {
+        li.style.display = 'block';
+      }
+    });
+  }
+}
+
+function clearCompletedTodos() {
+  const allLis = document.querySelectorAll('ul.todo-list li');
+  allLis.forEach((li) => {
+    if (li.classList.contains('completed')) {
+      todoList.removeChild(li);
+    }
+  });
+
+  todosArray = todosArray.filter((todo) => !todo.isDone);
+  sendData(todosArray);
+  counter.textContent = `${todosArray.length}`;
 }
 
 allTodosBtn.addEventListener('click', () => {
@@ -170,9 +208,11 @@ allTodosBtn.addEventListener('click', () => {
 });
 
 activeTodosBtn.addEventListener('click', () => {
-  changeFilter(activeTodosBtn, '/active');
+  changeFilter(activeTodosBtn, '/all');
 });
 
 completedTodosBtn.addEventListener('click', () => {
-  changeFilter(completedTodosBtn, '/completed');
+  changeFilter(completedTodosBtn, '/all');
 });
+
+clearBtn.addEventListener('click', clearCompletedTodos);
